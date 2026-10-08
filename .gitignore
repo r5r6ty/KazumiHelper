@@ -5,6 +5,7 @@ dist/
 *.exp
 *.pdb
 *.dll
+KazumiHelper.exe
 
 # 运行日志
 helper_log.txt
@@ -16,7 +17,9 @@ proxy.def
 mpv_probe*.ps1
 nl_*.json
 nl_*.txt
+nl_*.dart
+native_library.dart
+native_library_part*.txt
 real_json.txt
 real_dart.txt
 fork_tree.json
-native_library_part*.txt
