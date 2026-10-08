@@ -25,8 +25,15 @@ using System.Threading;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
+[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.0.0.0")]
+[assembly: System.Reflection.AssemblyTitle("KazumiHelper")]
+[assembly: System.Reflection.AssemblyProduct("KazumiHelper")]
+
 static class Program
 {
+    internal const string AppVersion = "1.0.0";
+
     internal static void Log(string msg)
     {
         try
@@ -126,11 +133,11 @@ class HelperForm : Form
 
         // 关键：强制创建原生句柄，否则后台线程 BeginInvoke 会抛异常
         var forceHandle = Handle;
-        Program.Log("helper started, handle=" + forceHandle);
+        Program.Log("helper v" + Program.AppVersion + " started, handle=" + forceHandle);
 
         _tray = new NotifyIcon();
         _tray.Icon = SystemIcons.Application;
-        _tray.Text = "Kazumi Helper (D/F 逐帧, S 截图)";
+        _tray.Text = "Kazumi Helper v" + Program.AppVersion + " (D/F 逐帧, S 截图)";
         _tray.Visible = true;
         var menu = new ContextMenu();
         _statusItem = new MenuItem("管道: 连接中…", (s, e) => { });

@@ -8,6 +8,7 @@
 
 #define PIPE_NAME "\\\\.\\pipe\\kazumi-mpv-ipc"
 #define LOG_PATH "D:\\KazumiHelper\\proxy_log.txt"
+#define PROXY_VERSION "1.0.0"
 
 static void proxy_log(const char *fmt, ...);
 
@@ -71,7 +72,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     if (reason == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls(hinst);
-        proxy_log("proxy loaded (process attach)");
+        proxy_log("proxy v%s loaded (process attach)", PROXY_VERSION);
     }
     else if (reason == DLL_PROCESS_DETACH)
     {
