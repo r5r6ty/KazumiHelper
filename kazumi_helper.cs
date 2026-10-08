@@ -25,20 +25,22 @@ using System.Threading;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
-[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.0.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.0.1.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.0.1.0")]
 [assembly: System.Reflection.AssemblyTitle("KazumiHelper")]
 [assembly: System.Reflection.AssemblyProduct("KazumiHelper")]
 
 static class Program
 {
-    internal const string AppVersion = "1.0.0";
+    internal const string AppVersion = "1.0.1";
 
     internal static void Log(string msg)
     {
         try
         {
-            File.AppendAllText(@"D:\KazumiHelper\helper_log.txt",
+            // 写到 exe 自己旁边，避免写死路径在别人机器上失效
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "helper_log.txt");
+            File.AppendAllText(path,
                 DateTime.Now.ToString("HH:mm:ss.fff ") + msg + Environment.NewLine);
         }
         catch { }
@@ -129,7 +131,12 @@ class HelperForm : Form
         WindowState = FormWindowState.Minimized;
         FormBorderStyle = FormBorderStyle.None;
         Opacity = 0;
-        Load += (s, e) => Hide();
+        Load += (s, e) =>
+        {
+            Hide();
+            _tray.ShowBalloonTip(2500, "Kazumi Helper",
+                "已启动：Kazumi 前台且播放中时生效\nD/F 逐帧，S 截图", ToolTipIcon.Info);
+        };
 
         // 关键：强制创建原生句柄，否则后台线程 BeginInvoke 会抛异常
         var forceHandle = Handle;

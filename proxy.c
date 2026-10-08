@@ -7,8 +7,22 @@
 #include <stdarg.h>
 
 #define PIPE_NAME "\\\\.\\pipe\\kazumi-mpv-ipc"
-#define LOG_PATH "D:\\KazumiHelper\\proxy_log.txt"
-#define PROXY_VERSION "1.0.0"
+#define PROXY_VERSION "1.0.1"
+
+/* 日志写到代理 DLL 自己旁边（即 Kazumi 目录），避免写死路径在别人机器上失效 */
+static wchar_t g_log_path[32768] = L"";
+
+static void init_log_path(HINSTANCE hinst)
+{
+    wchar_t path[32768];
+    DWORD n = GetModuleFileNameW(hinst, path, 32768);
+    wchar_t *slash;
+    if (!n || n >= 32768) return;
+    slash = wcsrchr(path, L'\\');
+    if (!slash) return;
+    lstrcpynW(slash + 1, L"proxy_log.txt", 32768 - (int)(slash + 1 - path));
+    lstrcpynW(g_log_path, path, 32768);
+}
 
 static void proxy_log(const char *fmt, ...);
 
@@ -47,7 +61,9 @@ __declspec(dllexport) unsigned long __cdecl mpv_client_api_version(void)
 
 static void proxy_log(const char *fmt, ...)
 {
-    FILE *f = fopen(LOG_PATH, "a");
+    FILE *f;
+    if (!g_log_path[0]) return;
+    f = _wfopen(g_log_path, L"a");
     if (!f) return;
     {
         SYSTEMTIME st;
@@ -72,6 +88,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     if (reason == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls(hinst);
+        init_log_path(hinst);
         proxy_log("proxy v%s loaded (process attach)", PROXY_VERSION);
     }
     else if (reason == DLL_PROCESS_DETACH)

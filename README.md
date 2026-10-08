@@ -38,7 +38,7 @@ KazumiHelper.exe（伴生托盘工具）
 
 - 带 Ctrl/Alt/Win 的组合键不受影响，Kazumi 不在前台时按键原样透传
 - 托盘右键：临时停用热键、查看管道状态、退出
-- 运行日志：`helper_log.txt`、`proxy_log.txt`
+- 运行日志：`helper_log.txt`（伴生工具目录）、`proxy_log.txt`（Kazumi 目录，代理 DLL 旁）
 
 ## 已知限制
 
