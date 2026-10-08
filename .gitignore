@@ -1,0 +1,22 @@
+# 构建产物
+dist/
+*.obj
+*.lib
+*.exp
+*.pdb
+*.dll
+
+# 运行日志
+helper_log.txt
+proxy_log.txt
+
+# 调试/研究用的临时产物
+mpv_exports.txt
+proxy.def
+mpv_probe*.ps1
+nl_*.json
+nl_*.txt
+real_json.txt
+real_dart.txt
+fork_tree.json
+native_library_part*.txt
