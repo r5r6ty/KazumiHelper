@@ -27,9 +27,6 @@ using System.Windows.Forms;
 
 static class Program
 {
-    [DllImport("user32.dll")]
-    static extern bool SetProcessDPIAware();
-
     internal static void Log(string msg)
     {
         try
@@ -43,8 +40,6 @@ static class Program
     [STAThread]
     static void Main()
     {
-        // 物理像素坐标，保证多显示器/高DPI下屏幕捕获位置正确
-        SetProcessDPIAware();
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
@@ -97,19 +92,7 @@ class HelperForm : Form
     [DllImport("user32.dll")]
     static extern short GetAsyncKeyState(int vKey);
 
-    const int VK_CONTROL = 0x11, VK_MENU = 0x12, VK_SHIFT = 0x10, VK_LWIN = 0x5B, VK_RWIN = 0x5C;
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct RECT { public int Left, Top, Right, Bottom; }
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct POINT { public int X, Y; }
-
-    [DllImport("user32.dll")]
-    static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
-
-    [DllImport("user32.dll")]
-    static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+    const int VK_CONTROL = 0x11, VK_MENU = 0x12, VK_LWIN = 0x5B, VK_RWIN = 0x5C;
 
     // ---------- 状态 ----------
     const string PipeName = "kazumi-mpv-ipc";
@@ -147,7 +130,7 @@ class HelperForm : Form
 
         _tray = new NotifyIcon();
         _tray.Icon = SystemIcons.Application;
-        _tray.Text = "Kazumi Helper (D/F 逐帧, S 截图, Shift+S 含弹幕)";
+        _tray.Text = "Kazumi Helper (D/F 逐帧, S 截图)";
         _tray.Visible = true;
         var menu = new ContextMenu();
         _statusItem = new MenuItem("管道: 连接中…", (s, e) => { });
@@ -206,9 +189,7 @@ class HelperForm : Form
                             now - Interlocked.Read(ref _lastShotTicks) > 800 * TimeSpan.TicksPerMillisecond)
                         {
                             Interlocked.Exchange(ref _lastShotTicks, now);
-                            bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
-                            if (shift) CapturePlayerRegionToClipboard();
-                            else ScreenshotToClipboard();
+                            ScreenshotToClipboard();
                         }
                         return (IntPtr)1;
                     }
@@ -482,48 +463,6 @@ class HelperForm : Form
             {
                 Program.Log("screenshot flow exception: " + ex);
                 try { File.Delete(file); } catch { }
-            }
-        });
-    }
-
-    // ---------- 含弹幕截图（捕获播放器客户区，所见即所得） ----------
-    void CapturePlayerRegionToClipboard()
-    {
-        ThreadPool.QueueUserWorkItem(delegate
-        {
-            try
-            {
-                IntPtr hwnd = GetForegroundWindow();
-                RECT rc;
-                if (hwnd == IntPtr.Zero || !GetClientRect(hwnd, out rc) || rc.Right - rc.Left <= 1)
-                {
-                    Program.Log("screen capture: window/rect unavailable");
-                    return;
-                }
-                POINT pt = new POINT { X = 0, Y = 0 };
-                if (!ClientToScreen(hwnd, ref pt)) return;
-                int w = rc.Right - rc.Left, h = rc.Bottom - rc.Top;
-                Ui((Action)delegate
-                {
-                    try
-                    {
-                        using (var bmp = new Bitmap(w, h))
-                        {
-                            using (var g = Graphics.FromImage(bmp))
-                                g.CopyFromScreen(pt.X, pt.Y, 0, 0, new System.Drawing.Size(w, h));
-                            Clipboard.SetImage(bmp);
-                        }
-                        _tray.ShowBalloonTip(1200, "Kazumi Helper", "截图(含弹幕)已复制到剪贴板", ToolTipIcon.Info);
-                    }
-                    catch (Exception ex)
-                    {
-                        Program.Log("clipboard write (screen) failed: " + ex);
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                Program.Log("screen capture exception: " + ex);
             }
         });
     }
