@@ -11,6 +11,9 @@ KazumiHelper.exe
 helper_log.txt
 proxy_log.txt
 
+# 本地发布脚本（含 token 路径，不入库）
+create_release.ps1
+
 # 调试/研究用的临时产物
 mpv_exports.txt
 proxy.def
