@@ -25,14 +25,19 @@ using System.Threading;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
-[assembly: System.Reflection.AssemblyVersion("1.0.1.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.0.1.0")]
+[assembly: System.Reflection.AssemblyVersion("1.0.2.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.0.2.0")]
 [assembly: System.Reflection.AssemblyTitle("KazumiHelper")]
 [assembly: System.Reflection.AssemblyProduct("KazumiHelper")]
 
 static class Program
 {
-    internal const string AppVersion = "1.0.1";
+    internal const string AppVersion = "1.0.2";
+
+    // 设置进程级 AUMID：Win10/11 会把气泡通知转成 Toast，
+    // 没有应用 ID 的进程 Toast 会被系统静默丢弃（不弹也不进通知中心）
+    [DllImport("shell32.dll", SetLastError = true)]
+    static extern void SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string appID);
 
     internal static void Log(string msg)
     {
@@ -55,6 +60,7 @@ static class Program
         Application.ThreadException += (s, e) => Log("UI exception: " + e.Exception);
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             Log("Fatal: " + e.ExceptionObject);
+        SetCurrentProcessExplicitAppUserModelID("Kazumi.Helper");
         Application.Run(new HelperForm());
     }
 }
@@ -131,13 +137,8 @@ class HelperForm : Form
         WindowState = FormWindowState.Minimized;
         FormBorderStyle = FormBorderStyle.None;
         Opacity = 0;
-        Load += (s, e) =>
-        {
-            Hide();
-            _tray.ShowBalloonTip(2500, "Kazumi Helper",
-                "已启动：Kazumi 前台且播放中时生效\nD/F 逐帧，S 截图", ToolTipIcon.Info);
-        };
-
+        // 注意：不能用 Load 事件 —— 下面 forceHandle 在构造期创建了句柄，
+        // 会导致 Application.Run 后 Load 不触发（WinForms 已知行为）
         // 关键：强制创建原生句柄，否则后台线程 BeginInvoke 会抛异常
         var forceHandle = Handle;
         Program.Log("helper v" + Program.AppVersion + " started, handle=" + forceHandle);
@@ -162,6 +163,18 @@ class HelperForm : Form
 
         new Thread(ConnectLoop) { IsBackground = true }.Start();
         new Thread(PollLoop) { IsBackground = true }.Start();
+
+        // 启动气泡：走消息循环定时器，延迟弹（图标刚注册立刻弹部分系统会丢弃）
+        var t = new System.Windows.Forms.Timer { Interval = 2500 };
+        t.Tick += (s2, e2) =>
+        {
+            t.Stop();
+            t.Dispose();
+            Program.Log("show startup balloon");
+            _tray.ShowBalloonTip(2500, "Kazumi Helper",
+                "已启动：Kazumi 前台且播放中时生效\nD/F 逐帧，S 截图", ToolTipIcon.Info);
+        };
+        t.Start();
     }
 
     void ToggleHotkeys()

@@ -16,7 +16,7 @@ $env:INCLUDE = "$msvc\include;$sdkRoot\Include\$sdk\ucrt;$sdkRoot\Include\$sdk\u
 $env:LIB = "$msvc\lib\x64;$sdkRoot\Lib\$sdk\ucrt\x64;$sdkRoot\Lib\$sdk\um\x64"
 
 New-Item -ItemType Directory -Force "$root\dist" | Out-Null
-cl /nologo /LD /O2 /W3 /utf-8 "$root\proxy.c" /Fe:"$root\dist\libmpv-2.dll" /link /IMPLIB:"$root\dist\proxy.lib" /PDB:"$root\dist\libmpv-2.pdb"
+cl /nologo /LD /O2 /W3 /utf-8 "$root\proxy.c" /Fo:"$root\dist\proxy.obj" /Fe:"$root\dist\libmpv-2.dll" /link /IMPLIB:"$root\dist\proxy.lib" /PDB:"$root\dist\libmpv-2.pdb"
 
 # ---- 2) 伴生工具 (Windows 自带 csc, 无需安装任何东西) ----
 & "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /out:"$root\dist\KazumiHelper.exe" /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll "$root\kazumi_helper.cs"
